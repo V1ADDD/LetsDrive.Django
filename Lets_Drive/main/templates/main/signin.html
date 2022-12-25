@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+{% load static %}
+<meta charset="utf-8">
+<html>
+<head>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet" type="text/css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+     <title>Вход</title>
+    <script type="text/javascript">
+    function log_in(e){
+        e.preventDefault();
+          $.ajax({
+                method:'POST',
+                url:"{% url 'auth_session' %}",
+                data:{
+                login: document.getElementById("login").value,
+                password: document.getElementById("pass").value,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: (data) => {
+                    if (data.error == undefined)
+                        window.location.href = 'profile';
+                    else{
+                        document.querySelectorAll('span').forEach(el => el.style.display = 'none');
+                        document.getElementById(data.error).style.display = 'block';
+                    }
+                },
+            });
+    }
+    </script>
+</head>
+<body style="max-height: 250px;" class="text-center">
+    <form onsubmit="log_in(event)">
+        <h1 class="h3 mb-4 fw-normal">Вход</h1>
+        <div class="form-floating">
+            <input class="form-control" id="login" required>
+            <label for="login">Логин</label>
+        </div>
+        <span id="error-login">Пользователя не существует!</span>
+        <span id="error-available">Аккаунт не активен!</span>
+        <div class="form-floating">
+            <input type="password" class="form-control" id="pass" required>
+            <label for="pass">Пароль</label>
+        </div>
+        <span id="error-pass">Неверный пароль!</span>
+        <button class="w-50 btn btn-lg btn-secondary mt-4" type="reset">Очистить</button><button class="w-50 btn btn-lg btn-primary mt-4" type="submit">Войти</button>
+        <a style="font-size: small;" href="signup">У вас ещё нету аккаунта?</a>
+    </form>
+    <script src="{% static 'js/signin-script.js' %}"></script>
+</body>

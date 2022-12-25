@@ -1,0 +1,92 @@
+
+{% extends 'main/base.html' %}
+
+{% block head %}
+    <title>Профиль</title>
+    <script type="text/javascript">
+        function exit(){
+            $.ajax({
+                method:'POST',
+                url:"{% url 'exit_user' %}",
+                data:{
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function() {
+                    window.location.href = '../';
+                },
+            });
+        }
+    </script>
+{% endblock %}
+{% block body %}
+<body style="max-height: 1000px; max-width: 1100px" class="text-center">
+{% endblock %}
+    {% block content %}
+    <div style="height: 200px;" class="table-responsive">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col" align="center">Автомобиль: </th>
+                <th scope="col" align="center">Расстояние: </th>
+                <th scope="col" align="center">Начало поездки: </th>
+                <th scope="col" align="center">Конец поездки: </th>
+                <th scope="col" align="center">Время в поездке: </th>
+                <th scope="col" align="center">Стоимость: </th>
+            </tr>
+            </thead>
+            <tbody>
+        {% for drive in drives %}
+            <tr>
+                <td align="center">{{ drive.auto.name}}</td>
+                <td align="center">{{ drive.distance}} км</td>
+                <td align="center">{{ drive.time_start}}</td>
+                <td align="center">{{ drive.time_finish}}</td>
+                <td align="center">{{ drive.time }}</td>
+                <td align="center">{{ drive.price }} BYN</td>
+            </tr>
+        {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div style="display: flex; height: 200px; justify-content: center; margin: 32px">
+       <div style="margin-top:32px; height: 200px;" class="table-responsive">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col" align="center">Номер: </th>
+                <th scope="col" align="center">Автомобиль: </th>
+                <th scope="col" align="center">Статус: </th>
+            </tr>
+            </thead>
+            <tbody>
+        {% for break in breaks %}
+            <tr>
+                <td align="center">{{ break.id}}</td>
+                <td align="center">{{ break.drive.auto.name}}</td>
+                <td align="center">{{ break.status}}</td>
+            </tr>
+        {% endfor %}
+            </tbody>
+        </table>
+           </div>
+        <form style="width: 45%; margin-left: 10%" method="POST" enctype="multipart/form-data">{% csrf_token %}
+        <h1 class="h3 mb-4 fw-normal">Зарегистрировать поломку:</h1>
+        <div class="form-floating">
+            <select name="drive" id="drive" class="form-control" required>
+                {% for drive in drives %}
+                <option value="{{ drive }}">{{ drive }}</option>
+                {% endfor %}
+            </select>
+            <label for="drive">Поездка</label>
+        </div>
+        <div class="form-floating">
+            <input type="file" name="photo" id="photo" accept="image/*,image/jpeg" class="form-control" required>
+            <label style="padding-top: 9px" for="photo">Фото</label>
+        </div>
+        <button class="w-50 btn btn-lg btn-secondary mt-4" type="reset">Отмена</button><button class="w-50 btn btn-lg btn-primary mt-4" type="submit">Добавить</button>
+    </form>
+    </div>
+    <form style="margin-top: 64px" onsubmit="exit()">
+        <button class="w-50 btn btn-lg btn-primary mt-4" type="submit">Выход</button>
+    </form>
+    {% endblock %}

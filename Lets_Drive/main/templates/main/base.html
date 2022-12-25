@@ -1,0 +1,32 @@
+<!doctype html>
+{% load static %}
+<html lang="en" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet" type="text/css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    {% block head %}{% endblock %}
+</head>
+{% block body %}{% endblock %}
+<header><a href = './' class="header-text">Let's Drive</a>
+    {% if login %}
+    <a href = './profile' class="header-text" style="margin-top:32px; font-size: 24px; margin-right: 0;">{{ login }}</a><div onclick="window.location.href = './profile'" class="profile-pic"></div>
+    {% else %}
+    <button onclick="window.location.href = 'signup'" class="w-10 btn btn-lg btn-secondary mt-4">Регистрация</button>
+    <button onclick="window.location.href = 'signin'" class="w-10 btn btn-lg btn-primary mt-4">Вход</button>
+    {% endif %}
+</header>
+{% block content %}{% endblock %}
+<div style="margin-top: 32px" class="container">
+  <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+    <div class="col-md-4 d-flex align-items-center">
+      <span style="display:block" class="mb-3 mb-md-0 text-muted">© 2022 Let's Drive, Inc</span>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

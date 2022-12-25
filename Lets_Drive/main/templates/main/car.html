@@ -1,0 +1,188 @@
+{% extends 'main/base.html' %}
+
+{% block head %}
+    <script type="text/javascript" src="http://maps.api.2gis.ru/1.0"></script>
+    <title>Машина</title>
+    <script type="text/javascript">
+        DG.autoload(function() {
+            let myMap = new DG.Map('myMapId');
+            let xx = '{{ x }}';
+            let yy = '{{ y }}';
+            myMap.setCenter(new DG.GeoPoint(xx,yy), 16);
+            myMap.controls.add(new DG.Controls.Zoom());
+            let myMarker = new DG.Markers.Common({
+                 geoPoint: new DG.GeoPoint(xx, yy),
+                 clickCallback: function() {
+                 }
+            });
+            myMap.markers.add(myMarker);
+        });
+        let const_time = 0;
+        let time = 0;
+        let dist = 0;
+        let pr_km = 0;
+        let pr_m = 0;
+        let pr = 0;
+        let total = 0;
+        function selecttarif(){
+            $.ajax({
+                method:'POST',
+                url:"{% url 'selecttarif' %}",
+                data:{
+                tarif: document.getElementById("tarif").value,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: (data) => {
+                    time = 0;
+                    dist = 0;
+                    pr_km = 0;
+                    pr_m = 0;
+                    pr = 0;
+                    document.getElementById("submit").innerText="Рассчитать";
+                    document.getElementById("about_tarif").innerText = "";
+                    if(data.error==="error") {
+                        document.getElementById("formzak").style.display = "none";
+                        document.querySelectorAll('input').forEach(el => el.value = '');
+                    }
+                    else
+                    {
+                        document.querySelectorAll('input').forEach(el => el.value = '');
+                        document.querySelectorAll('input').forEach(el => el.removeAttribute("disabled"));
+                        document.querySelectorAll('input').forEach(el => el.title = '');
+                        document.getElementById("start").min = new Date(Date.parse(new Date()) + (180)*60000).toISOString().split("T")[0]+" "+new Date(Date.parse(new Date()) + (180)*60000).toISOString().split("T")[1].substr(0,5);
+                        document.getElementById("finish").min = document.getElementById("start").min;
+                        const_time = 0;
+                        if(time!==const_time)
+                            time = const_time;
+                        document.getElementById("formzak").style.display = "block";
+                        if(data.time!==0){
+                            document.getElementById("about_tarif").innerText += "Лимит по времени: " + data.time + " минут\n";
+                            document.getElementById("finish").disabled = "disabled";
+                            time = data.time;
+                            const_time = time;
+                            document.getElementById("finish").title = "Время проката по тарифу: "+data.time+" минут!";
+                        }
+                        if(data.distance!==0) {
+                            document.getElementById("about_tarif").innerText += "Лимит по километражу: " + data.distance + " км\n";
+                            document.getElementById("distance").disabled = "disabled";
+                            document.getElementById("distance").value = data.distance;
+                            dist = data.distance;
+                            document.getElementById("distance").title = "Километраж по тарифу: " + data.distance + " км!";
+                        }
+                        if(data.pr_km!==0){
+                            pr_km = data.pr_km;
+                            document.getElementById("about_tarif").innerText += "Стоимость за километр: " + data.pr_km + " BYN\n";
+                        }
+                        if(data.pr_m!==0) {
+                            pr_m = data.pr_m;
+                            document.getElementById("about_tarif").innerText += "Стоимость за минуту: " + data.pr_m + " BYN\n";
+                        }
+                        if(data.pr!==0){
+                            pr = data.pr;
+                            document.getElementById("about_tarif").innerText += "Стоимость тарифа: " + data.pr + " BYN\n";
+                        }
+                    }
+                },
+            });
+        }
+        function count_price(e){
+            e.preventDefault();
+            document.getElementById("start").min = new Date(Date.parse(new Date()) + (180)*60000).toISOString().split("T")[0]+" "+new Date(Date.parse(new Date()) + (180)*60000).toISOString().split("T")[1].substr(0,5);
+            document.getElementById("finish").min = document.getElementById("start").min;
+            if(document.getElementById("submit").innerText==="Рассчитать"){
+                dist = document.getElementById("distance").value;
+                if(time!==0)
+                    document.getElementById("finish").value = new Date(Date.parse(document.getElementById("start").value) + (time+180)*60000).toISOString().split("T")[0] +" "+new Date(Date.parse(document.getElementById("start").value) + (time+180)*60000).toISOString().split("T")[1].substr(0,5);
+                time = (Date.parse(document.getElementById("finish").value) - Date.parse(document.getElementById("start").value))/60000;
+                total = pr_km*dist + pr_m*time + pr;
+                document.getElementById("price").value = total.toFixed(2) + " BYN";
+                document.getElementById("submit").innerText="Заказать";
+            }
+            else{
+                $.ajax({
+                method:'POST',
+                url:"{% url 'registerdrive' %}",
+                data:{
+                distance: dist,
+                time_start: document.getElementById("start").value,
+                time_finish: document.getElementById("finish").value,
+                price: total,
+                auto_id: '{{ auto.id }}',
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: (data) => {
+                    if(data.error==="error") {
+                        alert("Ошибка при регистрации поездки, попробуйте снова позже.");
+                    }
+                    else if (data.error==='login'){
+                        alert("Войдите в аккаунт!");
+                        window.location.href="../signin";
+                    }
+                    else{
+                        alert("Успешно заказано!");
+                        window.location.href="../profile";
+                    }
+                },
+                });
+            }
+        }
+        function change_form() {
+            document.getElementById('submit').innerText = 'Рассчитать';
+            document.getElementById("start").min = new Date(Date.parse(new Date()) + (180)*60000).toISOString().split("T")[0]+" "+new Date(Date.parse(new Date()) + (180)*60000).toISOString().split("T")[1].substr(0,5);
+            if(document.getElementById("start").value!=="")
+                document.getElementById("finish").min = document.getElementById("start").value;
+            else
+                document.getElementById("finish").min = document.getElementById("start").min;
+            document.getElementById("price").value="";
+            if(time!==const_time)
+                time = const_time;
+        }
+    </script>
+{% endblock %}
+{% block body %}<body style="max-height: 700px; max-width:1200px" class="text-center">{% endblock %}
+    {% block content %}
+    <div>
+        <div style="display: flex">
+            <div id="myMapId" style="width:600px;"></div>
+            <div style="margin-left: 50px">
+                Название: {{ auto.name }}<br>
+                Топливо: {{ auto.fuel }}: {{ auto.fueled }} л/100 л<br>
+                Пробег: {{ auto.probeg }} км<br>
+                Коробка передач: {{ auto.korobka }}<br>
+                <img height="300px" src="{{ auto.photo }}" alt="Автомобиль">
+            </div>
+        </div>
+    </div>
+    <div style="margin-top: 32px">
+        <h1 class="h3 mb-4 fw-normal">Забронировать: </h1>
+        <div class="form-floating">
+            <select name="tarif" id="tarif" class="form-control" onchange="selecttarif()">
+                <option value="-1">Не выбран</option>
+                {% for tarif in tarify %}
+                <option value="{{ tarif.id }}">{{ tarif }}</option>
+                {% endfor %}
+            </select>
+            <label for="tarif">Тариф</label>
+        </div>
+        <form id="formzak" style="display: none" onchange="change_form()" onsubmit="count_price(event)"><!-- {% csrf_token %}-->
+           <div class="form-floating">
+                <input type="datetime-local" name="start" id="start" class="form-control" required>
+                <label style="padding-top: 9px" for="start">Начало брони:</label>
+            </div>
+            <div class="form-floating">
+                <input type="datetime-local" name="finish" id="finish" class="form-control" required>
+                <label style="padding-top: 9px" for="finish">Конец брони:</label>
+            </div>
+            <div class="form-floating">
+                <input type="number" min="0" name="distance" id="distance" class="form-control" required>
+                <label style="padding-top: 9px" for="distance">Расстояние:</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" name="price" id="price" class="form-control" readonly>
+                <label style="padding-top: 9px" for="price">Итого:</label>
+            </div>
+            <span id="about_tarif" style="display: block; color: black"></span>
+            <button class="w-50 btn btn-lg btn-secondary mt-4" type="reset">Отмена</button><button id="submit" class="w-50 btn btn-lg btn-primary mt-4" type="submit">Рассчитать</button>
+        </form>
+    </div>
+    {% endblock %}

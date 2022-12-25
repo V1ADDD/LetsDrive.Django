@@ -1,0 +1,47 @@
+
+{% extends 'main/base.html' %}
+
+{% block head %}
+    <script type="text/javascript" src="http://maps.api.2gis.ru/1.0"></script>
+    <title>Главная</title>
+    <script type="text/javascript">
+    DG.autoload(function() {
+        let myMap = new DG.Map('myMapId');
+        myMap.setCenter(new DG.GeoPoint(27.559391389692312,53.90323834629636), 12);
+        myMap.controls.add(new DG.Controls.Zoom());
+        let x = 0;
+        let y = 0;
+        let myMarker;
+        "{% for auto in autos %}"
+        x = 27.50093+Math.floor(Math.random() * 10000)/100000;
+        y = 53.88548+Math.floor(Math.random() * 5000)/100000;
+        myMarker = new DG.Markers.Common({
+             geoPoint: new DG.GeoPoint(x, y),
+             clickCallback: function() {
+                $.ajax({
+                    method:'POST',
+                    url:"{% url 'send_coord' %}",
+                    data:{
+                    x: x,
+                    y: y,
+                    index: '{{ auto.id }}',
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function() {
+                        window.location.href = 'car';
+                    },
+                });
+            }
+        });
+        myMap.markers.add(myMarker);
+        "{% endfor %}"
+    });
+    </script>
+{% endblock %}
+{% block body %}<body style="max-height: 700px; max-width:1200px" class="text-center">{% endblock %}
+    {% block content %}
+    <div style="margin-top: 3%">
+        <h1 class="h3 mb-4 fw-normal">Выбирайте машину и поехали!</h1>
+        <center><div id="myMapId" style="width:70vw; height:70vh"></div></center>
+    </div>
+{% endblock %}
